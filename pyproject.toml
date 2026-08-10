@@ -15,3 +15,6 @@ dependencies = [
 dev = [
     "ruff>=0.16.2",
 ]
+
+[tool.ruff]
+extend-exclude = ["**/migrations/*.py"]

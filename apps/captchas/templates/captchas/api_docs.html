@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <style>
+    :root { --ink:#172033; --muted:#667085; --line:#e6eaf0; --soft:#f7f9fc; --blue:#2563eb; --code:#111827; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:#fff; font:15px/1.65 Inter,system-ui,sans-serif; }
+    .layout { display:grid; grid-template-columns:230px 1fr; min-height:100vh; }
+    aside { padding:32px 22px; background:var(--soft); border-right:1px solid var(--line); }
+    .brand { margin-bottom:30px; font-weight:750; letter-spacing:-.02em; }
+    .brand small { display:block; color:var(--blue); font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+    nav a { display:block; padding:6px 0; color:var(--muted); text-decoration:none; }
+    nav a:hover { color:var(--blue); }
+    main { width:min(920px,100%); padding:56px clamp(24px,7vw,92px); }
+    h1 { margin:0 0 10px; font-size:clamp(28px,4vw,42px); letter-spacing:-.04em; line-height:1.15; }
+    h2 { margin:46px 0 12px; font-size:23px; letter-spacing:-.025em; }
+    p { color:var(--muted); }
+    code, pre { font-family:"SFMono-Regular",Consolas,monospace; }
+    code { padding:2px 5px; color:#1746a2; background:#eff5ff; border-radius:4px; }
+    pre { overflow:auto; padding:18px; color:#dbeafe; background:var(--code); border-radius:9px; }
+    .lead { max-width:680px; font-size:17px; }
+    .note { padding:14px 16px; border-left:3px solid var(--blue); background:#f3f7ff; color:var(--muted); }
+    .method { display:inline-block; margin-right:8px; padding:2px 7px; color:#166534; background:#ecfdf3; border-radius:4px; font:700 11px monospace; }
+    table { width:100%; border-collapse:collapse; margin:14px 0; }
+    th,td { padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; }
+    th { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+    details { margin:12px 0; border:1px solid var(--line); border-radius:8px; }
+    summary { padding:12px 14px; cursor:pointer; font-weight:650; }
+    details pre { margin:0 12px 12px; }
+    footer { margin-top:56px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+    @media (max-width:720px) { .layout { display:block; } aside { border-right:0; border-bottom:1px solid var(--line); } nav { display:flex; flex-wrap:wrap; gap:0 18px; } main { padding-top:34px; } }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <div class="brand"><small>Captcha API</small>Documentação</div>
+      <nav aria-label="Navegação">
+        <a href="#inicio">Início</a><a href="#criar">Criar tarefa</a>
+        <a href="#consultar">Consultar tarefa</a><a href="#tipos">Tipos</a><a href="#erros">Erros</a>
+      </nav>
+    </aside>
+    <main>
+      <section id="inicio">
+        <h1>API de resolução de CAPTCHAs</h1>
+        <p class="lead">Crie tarefas, acompanhe o processamento e receba soluções em ambientes autorizados.</p>
+        <div class="note">Sua chave possui <strong>{{ key_threads }} thread(s)</strong>. Ao atingir o limite, novas tarefas retornam HTTP 429 e não entram em fila.</div>
+      </section>
+      <section id="criar">
+        <h2>Criar uma tarefa</h2>
+        <p><span class="method">POST</span><code>/api/v1/tasks/</code></p>
+        <pre><code>curl --request POST 'https://api.exemplo.com/api/v1/tasks/' \
+  --header 'X-API-Key: &lt;sua-chave&gt;' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "captcha_type": "recaptcha_v2",
+    "data": {"googlekey": "&lt;site-key&gt;", "pageurl": "https://seu-sistema.example/pagina"}
+  }'</code></pre>
+        <p>Resposta imediata: <code>202 Accepted</code>.</p>
+        <pre><code>{"task_id":"4dd69e6c-781b-49ba-b59d-f3201507121f","status":"processing"}</code></pre>
+      </section>
+      <section id="consultar">
+        <h2>Consultar uma tarefa</h2>
+        <p><span class="method">GET</span><code>/api/v1/tasks/{task_id}/</code></p>
+        <p>A API apresenta <code>processing</code> desde a aceitação. O estado interno de espera do worker não é exposto.</p>
+        <pre><code>{"task_id":"4dd69e6c-781b-49ba-b59d-f3201507121f","status":"completed","result":{"solution":"..."}}</code></pre>
+        <h3>Polling recomendado</h3>
+        <p>Consulte a cada 3 a 5 segundos. Continue enquanto o status for <code>processing</code> e encerre em <code>completed</code> ou <code>failed</code>. Defina também um timeout no seu cliente.</p>
+        <pre><code>criar tarefa → guardar task_id → aguardar 5s → consultar
+                         ├─ processing: repetir
+                         ├─ completed: usar result
+                         └─ failed: tratar error</code></pre>
+      </section>
+      <section id="tipos">
+        <h2>Tipos suportados</h2>
+        <table><thead><tr><th>Tipo</th><th>Campos principais</th></tr></thead><tbody>
+          <tr><td><code>normal</code></td><td><code>body</code> Base64</td></tr>
+          <tr><td><code>grid</code></td><td><code>body</code>, <code>grid_size</code>, <code>instructions</code></td></tr>
+          <tr><td><code>recaptcha_v2</code></td><td><code>googlekey</code>, <code>pageurl</code></td></tr>
+          <tr><td><code>recaptcha_v2_invisible</code></td><td><code>googlekey</code>, <code>pageurl</code></td></tr>
+          <tr><td><code>recaptcha_v2_enterprise</code></td><td><code>googlekey</code>, <code>pageurl</code></td></tr>
+          <tr><td><code>recaptcha_v3</code></td><td><code>googlekey</code>, <code>pageurl</code>, <code>action</code></td></tr>
+          <tr><td><code>recaptcha_v3_enterprise</code></td><td><code>googlekey</code>, <code>pageurl</code>, <code>action</code></td></tr>
+          <tr><td><code>geetest_v3</code></td><td><code>gt</code>, <code>challenge</code>, <code>pageurl</code></td></tr>
+          <tr><td><code>turnstile</code></td><td><code>sitekey</code>, <code>pageurl</code></td></tr>
+          <tr><td><code>cloudflare_challenge</code></td><td><code>pageurl</code></td></tr>
+          <tr><td><code>bls</code></td><td><code>instructions</code>, nove imagens</td></tr>
+          <tr><td><code>captchafox</code></td><td><code>sitekey</code>, <code>pageurl</code></td></tr>
+          <tr><td><code>friendly_captcha</code></td><td><code>sitekey</code>, <code>pageurl</code></td></tr>
+          <tr><td><code>lemin</code></td><td><code>captcha_id</code>, <code>pageurl</code></td></tr>
+        </tbody></table>
+        <h3>Payloads</h3>
+        <details><summary>Normal Captcha</summary><pre><code>{"captcha_type":"normal","data":{"body":"&lt;base64&gt;","content_type":"image/png","filename":"captcha.png","numeric":0,"regsense":0}}</code></pre></details>
+        <details><summary>Grid Image</summary><pre><code>{"captcha_type":"grid","data":{"body":"&lt;base64&gt;","content_type":"image/png","grid_size":"3x3","img_type":"recaptcha","instructions":"bicycles"}}</code></pre></details>
+        <details><summary>reCAPTCHA v2, Invisible e Callback</summary><pre><code>{"captcha_type":"recaptcha_v2","data":{"googlekey":"&lt;site-key&gt;","pageurl":"https://seu-sistema.example/pagina"}}</code></pre><p>Use o mesmo payload alterando <code>captcha_type</code> para <code>recaptcha_v2_invisible</code> ou <code>recaptcha_v2_callback</code>.</p></details>
+        <details><summary>reCAPTCHA v2 Enterprise</summary><pre><code>{"captcha_type":"recaptcha_v2_enterprise","data":{"googlekey":"&lt;site-key&gt;","pageurl":"https://seu-sistema.example/pagina","action":"login"}}</code></pre></details>
+        <details><summary>reCAPTCHA v3 e Enterprise</summary><pre><code>{"captcha_type":"recaptcha_v3","data":{"googlekey":"&lt;site-key&gt;","pageurl":"https://seu-sistema.example/pagina","action":"login"}}</code></pre><p>Use <code>recaptcha_v3_enterprise</code> para a variante Enterprise.</p></details>
+        <details><summary>GeeTest v3</summary><pre><code>{"captcha_type":"geetest_v3","data":{"gt":"&lt;gt&gt;","challenge":"&lt;challenge-atual&gt;","pageurl":"https://seu-sistema.example/pagina","api_server":"&lt;opcional&gt;"}}</code></pre></details>
+        <details><summary>Turnstile</summary><pre><code>{"captcha_type":"turnstile","data":{"sitekey":"&lt;site-key&gt;","pageurl":"https://seu-sistema.example/pagina"}}</code></pre></details>
+        <details><summary>Cloudflare Challenge</summary><pre><code>{"captcha_type":"cloudflare_challenge","data":{"pageurl":"https://seu-sistema.example/pagina","proxy":"&lt;opcional&gt;","proxytype":"HTTP","user_agent":"&lt;opcional&gt;"}}</code></pre></details>
+        <details><summary>BLS Captcha</summary><pre><code>{"captcha_type":"bls","data":{"instructions":"664","images":["&lt;data-uri-1&gt;","&lt;data-uri-2&gt;","&lt;data-uri-3&gt;","&lt;data-uri-4&gt;","&lt;data-uri-5&gt;","&lt;data-uri-6&gt;","&lt;data-uri-7&gt;","&lt;data-uri-8&gt;","&lt;data-uri-9&gt;"]}}</code></pre></details>
+        <details><summary>CaptchaFox</summary><pre><code>{"captcha_type":"captchafox","data":{"sitekey":"&lt;site-key&gt;","pageurl":"https://seu-sistema.example/pagina","proxy":"&lt;opcional&gt;","proxytype":"HTTP"}}</code></pre></details>
+        <details><summary>Friendly Captcha</summary><pre><code>{"captcha_type":"friendly_captcha","data":{"sitekey":"&lt;site-key&gt;","pageurl":"https://seu-sistema.example/pagina"}}</code></pre></details>
+        <details><summary>Lemin</summary><pre><code>{"captcha_type":"lemin","data":{"captcha_id":"&lt;captcha-id&gt;","pageurl":"https://seu-sistema.example/pagina","div_id":"&lt;opcional&gt;"}}</code></pre></details>
+        <p>Imagens devem ser JPG/JPEG, PNG ou GIF, entre 100 bytes e 100 KB. Grid e BLS retornam listas de posições; GeeTest retorna <code>challenge</code>, <code>validate</code> e <code>seccode</code>.</p>
+      </section>
+      <section id="erros">
+        <h2>Respostas importantes</h2>
+        <table><thead><tr><th>HTTP</th><th>Significado</th></tr></thead><tbody>
+          <tr><td><code>401</code></td><td>Chave ausente, inválida ou expirada.</td></tr>
+          <tr><td><code>404</code></td><td>Tarefa inexistente, expirada ou de outra chave.</td></tr>
+          <tr><td><code>422</code></td><td>Payload inválido.</td></tr>
+          <tr><td><code>429</code></td><td>Limite de threads atingido.</td></tr>
+          <tr><td><code>503</code></td><td>Fila indisponível.</td></tr>
+        </tbody></table>
+        <h3>Formato de falha</h3>
+        <pre><code>{"task_id":"...","status":"failed","error":{"code":"captchaai_unsolvable","message":"..."}}</code></pre>
+        <p>Não repita automaticamente erros de configuração. Para falhas temporárias, use poucas tentativas com espera progressiva.</p>
+      </section>
+      <footer>Tarefas permanecem disponíveis por aproximadamente 30 minutos. Nunca registre chaves, imagens ou tokens em logs.</footer>
+    </main>
+  </div>
+</body>
+</html>

@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-development-only")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() in {"1", "true", "yes"}
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -122,6 +122,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / "static"
+]
 
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")

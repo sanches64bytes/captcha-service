@@ -82,6 +82,28 @@ class TaskAPITests(TestCase):
 
         self.assertEqual(response.status_code, 401)
 
+    def test_captcha_docs_requires_api_key(self) -> None:
+        response = self.client.get("/api/v1/captchas/docs/")
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_captcha_docs_is_available_with_api_key(self) -> None:
+        response = self.client.get(
+            "/api/v1/captchas/docs/",
+            **self.headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "API de resolução de CAPTCHAs")
+        self.assertContains(response, "1 thread(s)")
+
+    def test_captcha_docs_accepts_query_key_for_browser_access(self) -> None:
+        response = self.client.get(
+            f"/api/v1/captchas/docs/?api_key={self.api_key.api_key}"
+        )
+
+        self.assertEqual(response.status_code, 200)
+
     @patch("apps.captchas.api.routes.process_captcha.delay")
     def test_task_cannot_be_read_with_another_api_key(self, delay: Mock) -> None:
         task_id = self._create_task()

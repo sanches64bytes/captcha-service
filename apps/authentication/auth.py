@@ -21,6 +21,10 @@ def get_api_key_from_request(request) -> str | None:
 
 def authenticate_request(request) -> Key:
     raw_key = get_api_key_from_request(request)
+    return authenticate_api_key(raw_key)
+
+
+def authenticate_api_key(raw_key: str | None) -> Key:
     if not raw_key:
         raise APIKeyAuthenticationError(_("Informe uma chave de API."))
     try:

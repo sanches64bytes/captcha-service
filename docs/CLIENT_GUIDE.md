@@ -48,6 +48,24 @@ A chave possui um limite de threads simultâneas. Quando esse limite é atingido
 a nova requisição é recusada com HTTP `429`; ela não entra em fila. Uma thread é
 liberada quando a tarefa termina com `completed` ou `failed`.
 
+## Consulta rápida no navegador
+
+Uma versão visual e resumida desta documentação está disponível em:
+
+```text
+GET /api/v1/captchas/docs/
+```
+
+Envie a chave pelo cabeçalho `X-API-Key`. Para abrir diretamente no navegador,
+também é possível usar temporariamente:
+
+```text
+/api/v1/captchas/docs/?api_key=<sua-chave>
+```
+
+O cabeçalho é preferível, pois evita que a chave apareça no histórico e nos
+logs de URL.
+
 ## Criar uma tarefa
 
 ```http

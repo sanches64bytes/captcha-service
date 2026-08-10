@@ -25,7 +25,8 @@ uv run python manage.py migrate
 uv run python manage.py check
 ```
 
-Configure `CAPTCHAAI_API_KEY` e `DJANGO_SECRET_KEY` no `.env`. Em seguida,
+Configure `CAPTCHAAI_API_KEY`, `DJANGO_SECRET_KEY` e `DJANGO_DEBUG` no `.env`.
+Em produção, mantenha `DJANGO_DEBUG=false`. Em seguida,
 inicie a API e um worker Celery em terminais separados:
 
 ```bash
@@ -44,6 +45,9 @@ uv run python manage.py createsuperuser
 Depois, cadastre uma `Chave` em `/admin/`, defina `max_threads` e use o valor de
 `api_key` no cabeçalho `X-API-Key`. O guia completo para clientes está em
 [`docs/CLIENT_GUIDE.md`](docs/CLIENT_GUIDE.md).
+
+Para uma consulta visual rápida, acesse `/api/v1/captchas/docs/` com uma chave
+de API válida.
 
 A principal funcionalidade consiste em receber uma solicitação de resolução de CAPTCHA, adicioná-la a uma fila de processamento e retornar imediatamente um identificador único da tarefa, chamado `task_id`.
 
