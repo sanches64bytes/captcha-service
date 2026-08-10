@@ -49,6 +49,9 @@ Depois, cadastre uma `Chave` em `/admin/`, defina `max_threads` e use o valor de
 Para uma consulta visual rápida, acesse `/api/v1/captchas/docs/` com uma chave
 de API válida.
 
+Em produção, o domínio `api.example.com` é reservado para clientes e o
+domínio `manage.example.com` para o Django Admin.
+
 As instruções de deploy direto em VPS/EC2, secrets, HTTPS, escala e operação estão em
 [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
 Use [`.env.production.example`](.env.production.example) como base para o

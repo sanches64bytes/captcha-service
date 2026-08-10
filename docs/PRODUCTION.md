@@ -4,9 +4,16 @@ Esta aplicação pode ser executada diretamente em uma máquina Linux, sem
 containers. A arquitetura recomendada é:
 
 ```text
-Cliente → Nginx/HTTPS → Gunicorn/Django → PostgreSQL
-                                      ↘ Redis/cache
-                                      ↘ Celery worker → CaptchaAI
+Clientes → api.example.com ─────────────────────────────────────────────────────────────────────────────────────────────────
+                                  │
+Administradores → manage.example.com ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                  │
+                           Nginx/HTTPS
+                                  │
+                         Gunicorn/Django
+                         ┌─────────────────────────────────────────────────────
+                         │ PostgreSQL | Redis | Celery → CaptchaAI
+                         └───────────────────────────────────────────────────────────────────────────────────────────────────────────
 ```
 
 ## Requisitos do servidor
@@ -76,7 +83,8 @@ Configure pelo menos:
 ```env
 DJANGO_SECRET_KEY=<valor-aleatorio-longo>
 DJANGO_DEBUG=false
-DJANGO_ALLOWED_HOSTS=api.seudominio.com
+DJANGO_ALLOWED_HOSTS=api.seudominio.com,manage.seudominio.com
+CSRF_TRUSTED_ORIGINS=https://manage.seudominio.com
 DJANGO_SECURE_SSL_REDIRECT=true
 DJANGO_TRUST_PROXY=true
 DJANGO_HSTS_SECONDS=31536000
@@ -140,7 +148,7 @@ journalctl -u captcha-worker -f
 
 ## Nginx e HTTPS
 
-Edite `deploy/nginx.conf`, substitua `api.example.com` pelo domínio real e
+Edite `deploy/nginx.conf`, substitua `api.example.com` e `manage.example.com` pelos domínios reais e
 instale:
 
 ```bash
@@ -148,8 +156,12 @@ sudo cp deploy/nginx.conf /etc/nginx/sites-available/captcha-api
 sudo ln -s /etc/nginx/sites-available/captcha-api /etc/nginx/sites-enabled/captcha-api
 sudo nginx -t
 sudo systemctl reload nginx
-sudo certbot --nginx -d api.seudominio.com
+sudo certbot --nginx -d api.seudominio.com -d manage.seudominio.com
 ```
+
+O domínio `api` publica somente `/api/` e `/health/`. O domínio `manage`
+publica somente `/admin/` e `/health/`; tentativas de acessar a API pelo
+domínio administrativo retornam `404` no Nginx.
 
 O endpoint de saúde é `GET /health/` e não exige API key. Use-o no health check
 do EC2 load balancer ou monitor externo. As rotas de tarefas continuam exigindo

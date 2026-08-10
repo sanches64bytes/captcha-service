@@ -16,7 +16,7 @@ class Key(models.Model):
     )
     max_threads = models.PositiveSmallIntegerField(default=1)
     expires_at = models.DateTimeField(null=True, blank=True)
-    
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name=_("Proprietário"),
@@ -33,7 +33,6 @@ class Key(models.Model):
     def is_expired(self) -> bool:
         if self.expires_at is None:
             return False
-        
+
         now = timezone.now()
         return self.expires_at <= now
-    
