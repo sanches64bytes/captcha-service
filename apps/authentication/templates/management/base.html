@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Gerenciamento{% endblock %}</title>
+  <style>
+    :root{--ink:#172033;--muted:#667085;--line:#e6eaf0;--soft:#f7f9fc;--blue:#2563eb;--danger:#b42318}
+    *{box-sizing:border-box}body{margin:0;color:var(--ink);background:var(--soft);font:15px/1.55 system-ui,sans-serif}
+    header{display:flex;align-items:center;justify-content:space-between;padding:18px 5vw;background:#fff;border-bottom:1px solid var(--line)}
+    header a{color:var(--muted);text-decoration:none;margin-left:18px}header strong{letter-spacing:-.02em}
+    main{width:min(1100px,90%);margin:36px auto}h1{margin:0 0 6px;font-size:32px;letter-spacing:-.04em}h2{margin-top:34px;font-size:21px}
+    .muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+    .card{padding:20px;background:#fff;border:1px solid var(--line);border-radius:10px}.row{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:13px 0}.row:last-child{border-bottom:0}
+    code{padding:3px 6px;background:#eef4ff;color:#1746a2;border-radius:4px;word-break:break-all}.badge{padding:3px 8px;background:#ecfdf3;color:#166534;border-radius:999px;font-size:12px}
+    button,.button{border:0;border-radius:6px;padding:8px 12px;background:var(--blue);color:white;cursor:pointer;text-decoration:none;font-size:13px}.danger{background:var(--danger)}input{padding:8px;border:1px solid var(--line);border-radius:6px}
+    .message{padding:10px 14px;background:#ecfdf3;color:#166534;border-radius:6px}.errorlist{color:var(--danger);padding-left:18px}
+    @media(max-width:650px){header{display:block}header nav{margin-top:12px}header a{margin:0 14px 0 0}.row{display:block}.row form{margin-top:10px}}
+  </style>
+</head>
+<body>
+  <header><strong>Captcha API · Gerenciamento</strong><nav><a href="{% url 'management-dashboard' %}">Visão geral</a><a href="{% url 'management-docs' %}">Documentação</a>{% if user.is_superuser %}<a href="{% url 'management-users' %}">Usuários</a>{% endif %}<a href="{% url 'management-logout' %}">Sair</a></nav></header>
+  <main>
+    {% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

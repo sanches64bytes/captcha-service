@@ -22,6 +22,7 @@ class CaptchaTaskStateError(Exception):
 
 class CaptchaTaskRepository:
     key_prefix = "captcha:task:"
+    index_prefix = "captcha:task-index:"
     lock_prefix = "captcha:task-lock:"
 
     def __init__(self, ttl: int | None = None) -> None:
@@ -52,6 +53,7 @@ class CaptchaTaskRepository:
             raise CaptchaTaskStateError(
                 _("A tarefa %(task_id)s já existe.") % {"task_id": task_id}
             )
+        self._add_to_index(task["api_key_id"], task_id)
         return task
 
     def get(self, task_id: str) -> CaptchaTaskData:
@@ -112,7 +114,30 @@ class CaptchaTaskRepository:
                 cache.delete(self._key(task_id))
                 raise CaptchaTaskNotFoundError(task_id)
             cache.set(self._key(task_id), updated, timeout=remaining_ttl)
+            if updated["status"] in {
+                CaptchaTaskStatus.COMPLETED,
+                CaptchaTaskStatus.FAILED,
+            }:
+                self._remove_from_index(updated.get("api_key_id"), task_id)
             return updated  # type: ignore[return-value]
+
+    def running_for_key(self, api_key_id: int) -> list[CaptchaTaskData]:
+        task_ids = cache.get(self._index_key(api_key_id), []) or []
+        running: list[CaptchaTaskData] = []
+        valid_ids: list[str] = []
+        for task_id in task_ids:
+            try:
+                task = self.get(task_id)
+            except CaptchaTaskNotFoundError:
+                continue
+            valid_ids.append(task_id)
+            if task["status"] in {
+                CaptchaTaskStatus.PENDING,
+                CaptchaTaskStatus.PROCESSING,
+            }:
+                running.append(task)
+        cache.set(self._index_key(api_key_id), valid_ids, timeout=self.ttl)
+        return running
 
     @contextmanager
     def _lock(self, task_id: str) -> Iterator[None]:
@@ -134,3 +159,24 @@ class CaptchaTaskRepository:
 
     def _key(self, task_id: str) -> str:
         return f"{self.key_prefix}{task_id}"
+
+    def _add_to_index(self, api_key_id: int | None, task_id: str) -> None:
+        if api_key_id is None:
+            return
+        task_ids = cache.get(self._index_key(api_key_id), []) or []
+        if task_id not in task_ids:
+            task_ids.append(task_id)
+        cache.set(self._index_key(api_key_id), task_ids, timeout=self.ttl)
+
+    def _remove_from_index(self, api_key_id: int | None, task_id: str) -> None:
+        if api_key_id is None:
+            return
+        task_ids = cache.get(self._index_key(api_key_id), []) or []
+        cache.set(
+            self._index_key(api_key_id),
+            [item for item in task_ids if item != task_id],
+            timeout=self.ttl,
+        )
+
+    def _index_key(self, api_key_id: int) -> str:
+        return f"{self.index_prefix}{api_key_id}"

@@ -127,6 +127,11 @@ sudo -u captcha-api env $(sudo cat /etc/captcha-api.env | xargs) \
   /opt/captcha-api/.venv/bin/python manage.py createsuperuser
 ```
 
+O painel operacional fica em `https://manage.seudominio.com/manage/`.
+Usuários autenticados podem consultar a documentação, suas chaves e tarefas
+em execução. Usuários `is_staff` podem renovar ou remover chaves; somente
+superusuários podem criar administradores e desativar usuários.
+
 ## Serviços systemd
 
 Instale as unidades fornecidas:
@@ -160,7 +165,7 @@ sudo certbot --nginx -d api.seudominio.com -d manage.seudominio.com
 ```
 
 O domínio `api` publica somente `/api/` e `/health/`. O domínio `manage`
-publica somente `/admin/` e `/health/`; tentativas de acessar a API pelo
+publica `/manage/`, `/admin/` e `/health/`; tentativas de acessar a API pelo
 domínio administrativo retornam `404` no Nginx.
 
 O endpoint de saúde é `GET /health/` e não exige API key. Use-o no health check

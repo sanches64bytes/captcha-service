@@ -64,6 +64,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "conf.urls"
+LOGIN_URL = "/manage/login/"
+LOGIN_REDIRECT_URL = "/manage/"
+LOGOUT_REDIRECT_URL = "/manage/login/"
 
 TEMPLATES = [
     {
