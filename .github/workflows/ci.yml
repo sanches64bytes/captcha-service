@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --locked --dev
+
+      - name: Django checks
+        run: uv run python manage.py check
+
+      - name: Check migrations
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Lint
+        run: uv run ruff check apps conf
+
+      - name: Tests
+        run: |
+          uv run python manage.py test apps.captchas
+          uv run python manage.py test apps.authentication
