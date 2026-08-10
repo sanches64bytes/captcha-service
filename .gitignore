@@ -13,6 +13,7 @@ wheels/
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 *.pem
 *.key
@@ -23,6 +24,8 @@ db.sqlite3
 
 
 .ruff_cache/
+staticfiles/*
+!staticfiles/.gitkeep
 .pytest_cache/
 .mypy_cache/
 .coverage

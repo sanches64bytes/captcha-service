@@ -1,0 +1,23 @@
+[Unit]
+Description=Captcha API (Celery worker)
+After=network.target postgresql.service redis-server.service
+Wants=postgresql.service redis-server.service
+
+[Service]
+Type=exec
+User=captcha-api
+Group=captcha-api
+WorkingDirectory=/opt/captcha-api
+EnvironmentFile=/etc/captcha-api.env
+ExecStart=/opt/captcha-api/.venv/bin/celery -A conf worker \
+  --loglevel=${CELERY_LOGLEVEL} \
+  --concurrency=${CELERY_CONCURRENCY}
+Restart=always
+RestartSec=5
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

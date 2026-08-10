@@ -1,0 +1,28 @@
+[Unit]
+Description=Captcha API (Gunicorn)
+After=network.target postgresql.service redis-server.service
+Wants=postgresql.service redis-server.service
+
+[Service]
+Type=exec
+User=captcha-api
+Group=captcha-api
+WorkingDirectory=/opt/captcha-api
+EnvironmentFile=/etc/captcha-api.env
+RuntimeDirectory=captcha-api
+RuntimeDirectoryMode=0750
+ExecStart=/opt/captcha-api/.venv/bin/gunicorn conf.wsgi:application \
+  --bind unix:/run/captcha-api/gunicorn.sock \
+  --workers 3 \
+  --timeout 120 \
+  --access-logfile - \
+  --error-logfile -
+Restart=always
+RestartSec=5
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

@@ -49,6 +49,11 @@ Depois, cadastre uma `Chave` em `/admin/`, defina `max_threads` e use o valor de
 Para uma consulta visual rápida, acesse `/api/v1/captchas/docs/` com uma chave
 de API válida.
 
+As instruções de deploy direto em VPS/EC2, secrets, HTTPS, escala e operação estão em
+[`docs/PRODUCTION.md`](docs/PRODUCTION.md).
+Use [`.env.production.example`](.env.production.example) como base para o
+ambiente do servidor.
+
 A principal funcionalidade consiste em receber uma solicitação de resolução de CAPTCHA, adicioná-la a uma fila de processamento e retornar imediatamente um identificador único da tarefa, chamado `task_id`.
 
 O sistema também implementa controle de concorrência por usuário, baseado em **threads de execução disponíveis**, garantindo limitação justa de uso e escalabilidade do processamento.
